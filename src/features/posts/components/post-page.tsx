@@ -5,7 +5,7 @@ import { PUBLIC_IMAGE_WIDTH } from "@/features/media/utils/media.utils";
 import { CommentSection } from "@/features/comments/components/comment-section";
 import { ContentRenderer } from "@/features/posts/components/content/content-renderer";
 import type { PostWithToc } from "@/features/posts/schema/posts.schema";
-import { authClient } from "@/lib/auth/auth-client";
+import { useSession } from "@/lib/auth/auth-client";
 import { m } from "@/paraglide/messages";
 import { usePhotoSwipeGallery } from "./content/photo-swipe";
 import { useHeadingAnchors } from "./content/use-heading-anchors";
@@ -13,19 +13,22 @@ import ZoomableImage from "./content/zoomable-image";
 import { PostAdjacentNav } from "./post-adjacent-nav";
 import { PostMeta } from "./post-meta";
 import { PostOutdatedNotice } from "./post-outdated-notice";
+import { PostShareButton } from "./post-share-button";
 import { PostSummary } from "./post-summary";
 import TableOfContents from "./table-of-contents";
 
 interface PostPageProps {
   post: Exclude<PostWithToc, null>;
+  /** The post's canonical address, as the route's head has it. */
+  canonicalHref: string;
 }
 
 function enterDelay(extraMs: number) {
   return `calc(var(--fuwari-content-delay) + ${extraMs}ms * var(--fuwari-stagger, 1))`;
 }
 
-export function PostPage({ post }: PostPageProps) {
-  const { data: session } = authClient.useSession();
+export function PostPage({ post, canonicalHref }: PostPageProps) {
+  const { data: session } = useSession();
   // The cover opens on its own; body images form one gallery.
   const coverRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -157,6 +160,9 @@ export function PostPage({ post }: PostPageProps) {
             </span>
             <div className="h-px w-full bg-linear-to-r from-(--fuwari-meta-divider) via-transparent to-transparent opacity-20" />
           </div>
+          <div className="mb-4 flex justify-center">
+            <PostShareButton title={post.title} url={canonicalHref} />
+          </div>
         </div>
       </div>
 
@@ -167,7 +173,7 @@ export function PostPage({ post }: PostPageProps) {
         className="fuwari-card-base p-6 fuwari-onload-animation"
         style={{ animationDelay: enterDelay(450) }}
       >
-        <CommentSection postId={post.id} />
+        <CommentSection target={{ type: "post", id: post.id }} />
       </div>
     </div>
   );
